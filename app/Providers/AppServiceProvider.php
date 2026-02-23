@@ -14,9 +14,9 @@ class AppServiceProvider extends ServiceProvider
     {
         $this->app->singleton(Beamdrop::class, function ($app) {
             return new Beamdrop(
-                baseUrl: config('services.beamdrop.url'),
-                accessKey: config('services.beamdrop.access_key'),
-                secretKey: config('services.beamdrop.secret_key'),
+                baseUrl: (string) config('services.beamdrop.url', 'http://localhost:8090'),
+                accessKey: (string) config('services.beamdrop.access_key', ''),
+                secretKey: (string) config('services.beamdrop.secret_key', ''),
             );
         });
     }
