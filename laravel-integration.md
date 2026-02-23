@@ -51,11 +51,11 @@ Start Beamdrop with API authentication enabled:
 
 # Production — with rate limiting and password protection
 ./beamdrop \
-  -dir /srv/beamdrop-data \
+  -dir ./storage/app \
   -port 8090 \
   -api-auth \
   -rate-limit 100 \
-  -password "your-ui-password" \
+  -password "test" \
   -log-level info
 ```
 
