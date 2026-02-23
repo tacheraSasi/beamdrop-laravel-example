@@ -34,5 +34,10 @@ return [
             'channel' => env('SLACK_BOT_USER_DEFAULT_CHANNEL'),
         ],
     ],
+    'beamdrop' => [
+        'url' => env('BEAMDROP_URL', 'http://localhost:8090'),
+        'access_key' => env('BEAMDROP_ACCESS_KEY'),
+        'secret_key' => env('BEAMDROP_SECRET_KEY'),
+    ],
 
 ];
