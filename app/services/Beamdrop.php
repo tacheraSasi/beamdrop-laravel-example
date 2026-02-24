@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace App\Services;
 
-use Illuminate\Support\Facades\Log;
 use RuntimeException;
 
 /**
@@ -19,9 +18,9 @@ class BeamdropException extends RuntimeException
     private ?array $body;
 
     /**
-     * @param  string  $message  Human-readable error message.
-     * @param  int  $code  HTTP status code (e.g. 404, 429).
-     * @param  array<string, mixed>|null  $body  Decoded JSON error body from the server.
+     * @param string                    $message  Human-readable error message.
+     * @param int                       $code     HTTP status code (e.g. 404, 429).
+     * @param array<string, mixed>|null $body     Decoded JSON error body from the server.
      */
     public function __construct(string $message, int $code = 0, ?array $body = null)
     {
@@ -62,9 +61,7 @@ class BeamdropException extends RuntimeException
 class Beamdrop
 {
     private string $baseUrl;
-
     private string $accessKey;
-
     private string $secretKey;
 
     /** cURL connection timeout in seconds. */
@@ -74,11 +71,11 @@ class Beamdrop
     private int $timeout;
 
     /**
-     * @param  string  $baseUrl  Base URL of the Beamdrop server (no trailing slash).
-     * @param  string  $accessKey  API access key ID (starts with BDK_).
-     * @param  string  $secretKey  API secret key (starts with sk_).
-     * @param  int  $connectTimeout  Connection timeout in seconds (default: 10).
-     * @param  int  $timeout  Total request timeout in seconds (default: 120).
+     * @param string $baseUrl        Base URL of the Beamdrop server (no trailing slash).
+     * @param string $accessKey      API access key ID (starts with BDK_).
+     * @param string $secretKey      API secret key (starts with sk_).
+     * @param int    $connectTimeout Connection timeout in seconds (default: 10).
+     * @param int    $timeout        Total request timeout in seconds (default: 120).
      */
     public function __construct(
         string $baseUrl,
@@ -104,7 +101,7 @@ class Beamdrop
      * Bucket names must be 3–63 lowercase alphanumeric characters, hyphens, or dots.
      * Must start and end with a letter or number. Cannot look like an IP address.
      *
-     * @param  string  $name  Bucket name (e.g. "avatars", "invoices").
+     * @param  string $name  Bucket name (e.g. "avatars", "invoices").
      * @return array{bucket: string, created: string, location: string}
      *
      * @throws BeamdropException 409 if the bucket already exists.
@@ -119,7 +116,8 @@ class Beamdrop
      *
      * The bucket must contain no objects. Delete all objects first.
      *
-     * @param  string  $name  Bucket name.
+     * @param  string $name  Bucket name.
+     * @return true
      *
      * @throws BeamdropException 404 if bucket not found, 409 if not empty.
      */
@@ -145,7 +143,8 @@ class Beamdrop
      *
      * Uses a HEAD request — no response body is transferred.
      *
-     * @param  string  $name  Bucket name.
+     * @param  string $name  Bucket name.
+     * @return bool
      */
     public function bucketExists(string $name): bool
     {
@@ -171,9 +170,9 @@ class Beamdrop
      * The bucket must exist before uploading. The key may contain forward
      * slashes to simulate a directory structure (e.g. "user-1/avatar.jpg").
      *
-     * @param  string  $bucket  Bucket name.
-     * @param  string  $key  Object key (relative path inside the bucket).
-     * @param  string  $body  Raw file contents.
+     * @param  string $bucket  Bucket name.
+     * @param  string $key     Object key (relative path inside the bucket).
+     * @param  string $body    Raw file contents.
      * @return array{bucket: string, key: string, etag: string, size: int, url: string}
      *
      * @throws BeamdropException 404 bucket not found, 423 object locked, 429 rate limited.
@@ -188,8 +187,8 @@ class Beamdrop
      *
      * Returns the raw body, content type, length, ETag, and last-modified date.
      *
-     * @param  string  $bucket  Bucket name.
-     * @param  string  $key  Object key.
+     * @param  string $bucket  Bucket name.
+     * @param  string $key     Object key.
      * @return array{body: string, content_type: string, content_length: int, etag: string, last_modified: string}
      *
      * @throws BeamdropException 404 if bucket or object not found.
@@ -202,8 +201,9 @@ class Beamdrop
     /**
      * Delete a file.
      *
-     * @param  string  $bucket  Bucket name.
-     * @param  string  $key  Object key.
+     * @param  string $bucket  Bucket name.
+     * @param  string $key     Object key.
+     * @return true
      *
      * @throws BeamdropException 404 if not found, 423 if locked.
      */
@@ -217,8 +217,8 @@ class Beamdrop
     /**
      * Get object metadata without downloading the body.
      *
-     * @param  string  $bucket  Bucket name.
-     * @param  string  $key  Object key.
+     * @param  string $bucket  Bucket name.
+     * @param  string $key     Object key.
      * @return array{content_type: string, content_length: int, etag: string, last_modified: string}
      *
      * @throws BeamdropException 404 if not found.
@@ -231,8 +231,9 @@ class Beamdrop
     /**
      * Check whether an object exists.
      *
-     * @param  string  $bucket  Bucket name.
-     * @param  string  $key  Object key.
+     * @param  string $bucket  Bucket name.
+     * @param  string $key     Object key.
+     * @return bool
      */
     public function objectExists(string $bucket, string $key): bool
     {
@@ -251,10 +252,10 @@ class Beamdrop
     /**
      * List objects in a bucket with optional prefix/delimiter filtering.
      *
-     * @param  string  $bucket  Bucket name.
-     * @param  string|null  $prefix  Only return keys starting with this prefix.
-     * @param  string|null  $delimiter  Group keys by this character (usually "/") to simulate folders.
-     * @param  int  $maxKeys  Maximum number of results (1–1000, default 1000).
+     * @param  string      $bucket     Bucket name.
+     * @param  string|null $prefix     Only return keys starting with this prefix.
+     * @param  string|null $delimiter  Group keys by this character (usually "/") to simulate folders.
+     * @param  int         $maxKeys    Maximum number of results (1–1000, default 1000).
      * @return array{bucket: string, prefix: string, delimiter: string, maxKeys: int, isTruncated: bool, contents: array, commonPrefixes: array}
      */
     public function listObjects(
@@ -289,18 +290,35 @@ class Beamdrop
     // ──────────────────────────────────────────────
     //  Presigned URLs
     // ──────────────────────────────────────────────
+    //
+    //  Beamdrop supports TWO types of presigned URLs:
+    //
+    //  1. Client-side (HMAC) presigned URLs — generated locally using your secret key.
+    //     No server round-trip. URL contains the HMAC token, expiry, and access key in
+    //     query params. Longer/uglier, but works without the server-side registry feature.
+    //     Use: presignedUrl()
+    //
+    //  2. Server-side (pretty) presigned URLs — created via POST /api/v1/presign.
+    //     Returns a short /dl/{token} URL. Supports max-download limits. Individually
+    //     revocable. Requires the server-side presigned URL registry feature.
+    //     Use: createPrettyPresignedUrl(), revokePrettyPresignedUrl(), listPrettyPresignedUrls()
+    //
 
     /**
-     * Generate a time-limited presigned URL for downloading a file.
+     * Generate a client-side HMAC presigned URL for downloading a file.
+     *
+     * This is the traditional method — the token is computed locally from your
+     * secret key. No server request is made. The resulting URL is long but works
+     * without the server-side presigned URL registry.
      *
      * The URL can be shared with anyone — no API key required to access it.
      * The link expires after $expiresIn seconds.
      *
-     * @param  string  $bucket  Bucket name.
-     * @param  string  $key  Object key.
-     * @param  int  $expiresIn  Seconds until the URL expires (e.g. 3600 = 1 hour).
-     * @param  string  $method  HTTP method the URL is valid for (default: "GET").
-     * @return string The full presigned URL.
+     * @param  string $bucket     Bucket name.
+     * @param  string $key        Object key.
+     * @param  int    $expiresIn  Seconds until the URL expires (e.g. 3600 = 1 hour).
+     * @param  string $method     HTTP method the URL is valid for (default: "GET").
+     * @return string  The full presigned URL.
      */
     public function presignedUrl(
         string $bucket,
@@ -327,6 +345,79 @@ class Beamdrop
         return "{$this->baseUrl}{$path}?{$query}";
     }
 
+    /**
+     * Create a server-side pretty presigned URL via the registry.
+     *
+     * This calls POST /api/v1/presign on the server to register a short
+     * download URL like https://files.example.com/dl/a1b2c3d4... that is
+     * clean enough to share in emails, embed in pages, or send to clients.
+     *
+     * Advantages over client-side presigned URLs:
+     *   - Short, clean /dl/{token} URLs
+     *   - Optional max download limit
+     *   - Individually revocable (DELETE /api/v1/presign/{token})
+     *   - Server tracks download count
+     *
+     * @param  string   $bucket        Bucket name.
+     * @param  string   $key           Object key.
+     * @param  int|null $expiresIn     Seconds until the URL expires (null = no expiry).
+     * @param  int|null $maxDownloads  Maximum number of downloads (null = unlimited).
+     * @param  string   $method        HTTP method the URL is valid for (default: "GET").
+     * @return array{token: string, url: string, bucket: string, key: string, method: string, expiresAt: ?string, maxDownloads: ?int, createdAt: string}
+     *
+     * @throws BeamdropException on failure.
+     */
+    public function createPrettyPresignedUrl(
+        string $bucket,
+        string $key,
+        ?int $expiresIn = null,
+        ?int $maxDownloads = null,
+        string $method = 'GET',
+    ): array {
+        $payload = [
+            'bucket' => $bucket,
+            'key' => $key,
+            'method' => $method,
+        ];
+
+        if ($expiresIn !== null) {
+            $payload['expiresIn'] = $expiresIn;
+        }
+
+        if ($maxDownloads !== null) {
+            $payload['maxDownloads'] = $maxDownloads;
+        }
+
+        return $this->request('POST', '/api/v1/presign', json_encode($payload));
+    }
+
+    /**
+     * Revoke (delete) a server-side pretty presigned URL.
+     *
+     * Once revoked, the /dl/{token} URL immediately returns 404.
+     *
+     * @param  string $token  The presigned URL token (from createPrettyPresignedUrl).
+     * @return true
+     *
+     * @throws BeamdropException 404 if token not found.
+     */
+    public function revokePrettyPresignedUrl(string $token): true
+    {
+        $this->request('DELETE', "/api/v1/presign/{$token}");
+
+        return true;
+    }
+
+    /**
+     * List all server-side pretty presigned URLs.
+     *
+     * @return array{urls: array, count: int}
+     */
+    public function listPrettyPresignedUrls(): array
+    {
+        return $this->request('GET', '/api/v1/presign');
+    }
+
     // ──────────────────────────────────────────────
     //  Internal: HTTP transport & signing
     // ──────────────────────────────────────────────
@@ -334,10 +425,10 @@ class Beamdrop
     /**
      * Sign and send an API request that expects a JSON response.
      *
-     * @param  string  $method  HTTP method (GET, PUT, POST, DELETE, HEAD).
-     * @param  string  $path  Request path including query string.
-     * @param  string|null  $body  Raw request body (for PUT/POST).
-     * @return array<string, mixed> Decoded JSON response.
+     * @param  string      $method  HTTP method (GET, PUT, POST, DELETE, HEAD).
+     * @param  string      $path    Request path including query string.
+     * @param  string|null $body    Raw request body (for PUT/POST).
+     * @return array<string, mixed>  Decoded JSON response.
      *
      * @throws BeamdropException on any non-2xx response.
      */
@@ -367,8 +458,8 @@ class Beamdrop
     /**
      * Sign and send an API request that returns raw content (file downloads, HEAD).
      *
-     * @param  string  $method  HTTP method.
-     * @param  string  $path  Request path.
+     * @param  string $method  HTTP method.
+     * @param  string $path    Request path.
      * @return array{body?: string, content_type: string, content_length: int, etag: string, last_modified: string}
      *
      * @throws BeamdropException on any non-2xx response.
@@ -407,19 +498,15 @@ class Beamdrop
      *   Signature    = Base64(HMAC-SHA256(StringToSign, SecretKey))
      *   Header       = Authorization: Bearer ACCESS_KEY:SIGNATURE
      *
-     * @param  string  $method  HTTP method.
-     * @param  string  $path  Path with optional query string (e.g. "/api/v1/buckets/photos").
-     * @param  string|null  $body  Request body.
-     * @return array{0: int, 1: string, 2: array<string, string>} [statusCode, body, headers]
+     * @param  string      $method  HTTP method.
+     * @param  string      $path    Path with optional query string (e.g. "/api/v1/buckets/photos").
+     * @param  string|null $body    Request body.
+     * @return array{0: int, 1: string, 2: array<string, string>}  [statusCode, body, headers]
      *
      * @throws BeamdropException if cURL fails entirely (network error).
      */
     private function sendRequest(string $method, string $path, ?string $body = null): array
     {
-        if ($this->accessKey === '' || $this->secretKey === '') {
-            throw new BeamdropException('Beamdrop credentials are missing. Set BEAMDROP_ACCESS_KEY and BEAMDROP_SECRET_KEY in your .env file.');
-        }
-
         // ── Build the signed headers ──
 
         // For signing, use only the path portion (strip query string)
@@ -437,7 +524,9 @@ class Beamdrop
         ];
 
         if ($body !== null) {
-            $headers[] = 'Content-Type: application/octet-stream';
+            // Detect JSON bodies (starts with { or [) vs raw binary
+            $isJson = isset($body[0]) && ($body[0] === '{' || $body[0] === '[');
+            $headers[] = 'Content-Type: ' . ($isJson ? 'application/json' : 'application/octet-stream');
             $headers[] = 'Content-Length: ' . strlen($body);
         }
 
@@ -485,18 +574,6 @@ class Beamdrop
         if ($responseBody === false) {
             $error = curl_error($ch);
             $errno = curl_errno($ch);
-
-            Log::error('Beamdrop cURL request failed', [
-                'url' => $url,
-                'method' => $method,
-                'path' => $path,
-                'signed_path' => $signPath,
-                'access_key' => $this->accessKey,
-                'timestamp' => $timestamp,
-                'curl_errno' => $errno,
-                'curl_error' => $error,
-            ]);
-
             curl_close($ch);
 
             throw new BeamdropException(
@@ -507,23 +584,6 @@ class Beamdrop
 
         $statusCode = (int) curl_getinfo($ch, CURLINFO_HTTP_CODE);
         curl_close($ch);
-
-        Log::info('Beamdrop API response', [
-            'url' => $url,
-            'method' => $method,
-            'path' => $path,
-            'signed_path' => $signPath,
-            'access_key' => $this->accessKey,
-            'timestamp' => $timestamp,
-            'status_code' => $statusCode,
-            'request_headers' => [
-                'Authorization' => "Bearer {$this->accessKey}:[redacted]",
-                'X-Beamdrop-Date' => $timestamp,
-                'Content-Type' => $body !== null ? 'application/octet-stream' : null,
-            ],
-            'response_headers' => $responseHeaders,
-            'response_body' => is_string($responseBody) ? mb_substr($responseBody, 0, 10000) : null,
-        ]);
 
         return [$statusCode, $responseBody, $responseHeaders];
     }
